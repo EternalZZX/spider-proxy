@@ -1,8 +1,7 @@
-const axios = require('axios')
-const TaskHandler = require('./src/TaskHandler')
-const ProductSpider = require('./src/ProductSpider')
 const ProxyPool = require('./src/proxy/ProxyPool')
 const IHuanProvider = require('./src/proxy/IHuanProvider')
+const TaskHandler = require('./src/jd/TaskHandler')
+const ProductSpider = require('./src/jd/ProductSpider')
 
 function main () {
   // printProductData('57842141382', '1_2800_55811_0')
@@ -11,16 +10,11 @@ function main () {
   const proxyPool = new ProxyPool([
     new IHuanProvider()
   ], {
-    async checkFunction (req) {
-      const CancelToken = axios.CancelToken
-      const source = CancelToken.source()
-      const timer = setTimeout(() => {
-        source.cancel('Operation canceled by the user.')
-      }, 30000);
-      const response = await req.get('https://dc.3.cn/category/get', null, {
-        cancelToken: source.token
-      })
-      clearTimeout(timer)
+    ready () {
+      printProductData(proxyPool, '57842141382', '1_2800_55811_0')
+    },
+    async checkHandler (req) {
+      const response = await req.get('https://dc.3.cn/category/get')
       return response && response.data && response.data.data instanceof Array
     }
   })
@@ -66,8 +60,11 @@ async function printCategoryData () {
   }
 }
 
-async function printProductData (id, area) {
-  const product = await new ProductSpider(id, area)
+async function printProductData (proxyPool, id, area) {
+  const product = await new ProductSpider(proxyPool, id, area)
+  if (!product) {
+    return
+  }
   console.log('名称: ', `${product.isOfficial ? '【自营】' : ''}`, product.name)
   if (product.isActive) {
     console.log('原价: ', product.price)

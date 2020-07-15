@@ -1,5 +1,5 @@
 const cheerio = require('cheerio')
-const BaseRequest = require('../BaseRequest')
+const BaseRequest = require('../common/BaseRequest')
 const ProxyProvider = require('./ProxyProvider')
 
 class IHuanProvider extends ProxyProvider {
